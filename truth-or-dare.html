@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Truth or Dare 💕</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --pink: #ff6b9d;
+    --pink-light: #ffe0ed;
+    --pink-dark: #c94478;
+    --amber: #ffb347;
+    --amber-light: #fff3dc;
+    --amber-dark: #c87d00;
+    --cream: #fdf6f0;
+    --card-bg: #ffffff;
+    --text: #1a1a1a;
+    --text-muted: #888;
+    --border: rgba(0,0,0,0.08);
+    --radius: 20px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    min-height: 100vh;
+    color: var(--text);
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    top: -200px; right: -200px;
+    width: 500px; height: 500px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #ffd6e7 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    bottom: -200px; left: -200px;
+    width: 500px; height: 500px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #ffecd2 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app {
+    position: relative;
+    z-index: 1;
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 2rem 1.25rem 4rem;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+    animation: fadeDown 0.6s ease both;
+  }
+
+  header .emoji-row {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    letter-spacing: 4px;
+  }
+
+  header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.4rem;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.1;
+  }
+
+  header p {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin-top: 6px;
+    font-weight: 300;
+  }
+
+  .players {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 1.5rem;
+    animation: fadeUp 0.6s 0.1s ease both;
+  }
+
+  .player-card {
+    background: var(--card-bg);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.22s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .player-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .p1::before { background: linear-gradient(135deg, #ffe0ed 0%, #fff5f8 100%); }
+  .p2::before { background: linear-gradient(135deg, #e0f0ff 0%, #f5f9ff 100%); }
+
+  .player-card.active::before { opacity: 1; }
+  .player-card.active { border-color: transparent; transform: translateY(-2px); }
+  .p1.active { border-color: var(--pink); box-shadow: 0 4px 20px rgba(255,107,157,0.2); }
+  .p2.active { border-color: #5ba3f5; box-shadow: 0 4px 20px rgba(91,163,245,0.2); }
+
+  .player-card:hover:not(.active) { transform: translateY(-1px); }
+
+  .player-avatar {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem;
+    margin: 0 auto 8px;
+    position: relative;
+  }
+
+  .p1 .player-avatar { background: var(--pink-light); }
+  .p2 .player-avatar { background: #dceeff; }
+
+  .player-name {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text);
+    position: relative;
+  }
+
+  .player-score {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 300;
+    position: relative;
+    margin-top: 2px;
+  }
+
+  .active-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    position: absolute;
+    top: 8px; right: 8px;
+    display: none;
+  }
+  .p1.active .active-dot { background: var(--pink); display: block; }
+  .p2.active .active-dot { background: #5ba3f5; display: block; }
+
+  .card-stage {
+    background: var(--card-bg);
+    border-radius: 28px;
+    border: 1.5px solid var(--border);
+    min-height: 220px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1.75rem;
+    margin-bottom: 1.25rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s;
+    animation: fadeUp 0.6s 0.2s ease both;
+  }
+
+  .card-stage.truth-mode { border-color: rgba(255,107,157,0.4); }
+  .card-stage.dare-mode { border-color: rgba(255,179,71,0.5); }
+
+  .card-decoration {
+    position: absolute;
+    font-size: 6rem;
+    opacity: 0.04;
+    pointer-events: none;
+  }
+  .dec-tl { top: -10px; left: -10px; transform: rotate(-20deg); }
+  .dec-br { bottom: -10px; right: -10px; transform: rotate(20deg); }
+
+  .idle-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .idle-icon {
+    font-size: 2.5rem;
+    margin-bottom: 4px;
+  }
+
+  .idle-text {
+    font-size: 1rem;
+    color: var(--text-muted);
+    font-weight: 300;
+  }
+
+  .card-content { display: none; width: 100%; }
+
+  .card-type-badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 4px 14px;
+    border-radius: 30px;
+    margin-bottom: 1rem;
+  }
+
+  .badge-truth { background: var(--pink-light); color: var(--pink-dark); }
+  .badge-dare { background: var(--amber-light); color: var(--amber-dark); }
+
+  .card-question {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.25rem;
+    line-height: 1.55;
+    color: var(--text);
+    margin-bottom: 1rem;
+  }
+
+  .card-for {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    font-weight: 300;
+  }
+
+  .round-num {
+    position: absolute;
+    top: 14px; right: 16px;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    font-weight: 300;
+  }
+
+  .actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+    animation: fadeUp 0.6s 0.3s ease both;
+  }
+
+  .btn {
+    padding: 14px 20px;
+    border-radius: 14px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    border: none;
+    transition: all 0.18s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .btn:active { transform: scale(0.97); }
+
+  .btn-truth {
+    background: var(--pink);
+    color: white;
+    grid-column: 1;
+  }
+  .btn-truth:hover { background: var(--pink-dark); }
+
+  .btn-dare {
+    background: var(--amber);
+    color: white;
+    grid-column: 2;
+  }
+  .btn-dare:hover { background: var(--amber-dark); }
+
+  .secondary-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    animation: fadeUp 0.6s 0.35s ease both;
+  }
+
+  .btn-sec {
+    background: var(--card-bg);
+    border: 1.5px solid var(--border);
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    padding: 11px 16px;
+    border-radius: 12px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: all 0.18s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-weight: 400;
+  }
+
+  .btn-sec:hover { border-color: #ccc; color: var(--text); background: #f8f8f8; }
+  .btn-sec:active { transform: scale(0.97); }
+
+  .fun-msg {
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 1rem;
+    min-height: 20px;
+    font-style: italic;
+    animation: fadeUp 0.6s 0.4s ease both;
+  }
+
+  .slide-in {
+    animation: slideCard 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+
+  @keyframes slideCard {
+    from { opacity: 0; transform: scale(0.88) translateY(10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 400px) {
+    header h1 { font-size: 2rem; }
+    .card-question { font-size: 1.1rem; }
+    .btn { font-size: 0.88rem; padding: 12px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header>
+    <div class="emoji-row">💕</div>
+    <h1>Truth or Dare</h1>
+    <p>A little game for two</p>
+  </header>
+
+  <div class="players">
+    <div class="player-card p1 active" onclick="selectPlayer(1)">
+      <div class="active-dot"></div>
+      <div class="player-avatar">🧡</div>
+      <div class="player-name" id="p1name">Player 1</div>
+      <div class="player-score" id="p1score">0 rounds</div>
+    </div>
+    <div class="player-card p2" onclick="selectPlayer(2)">
+      <div class="active-dot"></div>
+      <div class="player-avatar">💙</div>
+      <div class="player-name" id="p2name">Player 2</div>
+      <div class="player-score" id="p2score">0 rounds</div>
+    </div>
+  </div>
+
+  <div class="card-stage" id="cardStage">
+    <span class="card-decoration dec-tl">✦</span>
+    <span class="card-decoration dec-br">✦</span>
+
+    <div class="idle-state" id="idleState">
+      <div class="idle-icon">🎴</div>
+      <div class="idle-text">Pick truth or dare to start</div>
+    </div>
+
+    <div class="card-content" id="cardContent">
+      <span class="round-num" id="roundNum"></span>
+      <span class="card-type-badge" id="cardBadge"></span>
+      <div class="card-question" id="cardQuestion"></div>
+      <div class="card-for" id="cardFor"></div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-truth" onclick="draw('truth')">💬 Truth</button>
+    <button class="btn btn-dare" onclick="draw('dare')">⚡ Dare</button>
+  </div>
+
+  <div class="secondary-actions">
+    <button class="btn-sec" onclick="skipCard()">↺ New card</button>
+    <button class="btn-sec" onclick="switchTurn()">⇄ Switch turn</button>
+  </div>
+
+  <div class="fun-msg" id="funMsg"></div>
+</div>
+
+<script>
+const truths = [
+  "What's one thing about me that surprised you when we first met?",
+  "What's the most embarrassing thing you've done on a date?",
+  "What's one habit of mine you secretly find adorable?",
+  "Describe our relationship in three words — go!",
+  "What's something you've never told me but always wanted to?",
+  "What was your first impression of me, honestly?",
+  "What's one thing you wish we did more often together?",
+  "What's your most embarrassing childhood memory?",
+  "Have you ever snooped through my phone or messages?",
+  "What's one thing I do that drives you crazy (in a bad way)?",
+  "What song secretly reminds you of me?",
+  "Have you ever pretended to like something just to impress me?",
+  "What's one thing you'd change about how we met?",
+  "What's the cheesiest thing you've ever said to someone you liked?",
+  "What's a deal-breaker you've never actually told me about?",
+  "If you had to describe me as a food, what would I be?",
+  "What's a fear you've never admitted to anyone?",
+  "What's the biggest white lie you've told me?",
+  "What's one dream you've never shared with me?",
+  "What made you fall for me, if you had to pick one moment?",
+  "What's the weirdest thing you find attractive about me?",
+  "If we could teleport anywhere right now, where would you take me?",
+  "What's one thing you'd do differently in our relationship?",
+  "What would you do if I showed up at your door at 3am?",
+];
+
+const dares = [
+  "Text your mom saying 'I think I saw a UFO today' and show the reply.",
+  "Serenade me with 30 seconds of your favorite song — no skipping!",
+  "Give me the best compliment you can think of, right now.",
+  "Do your best impression of me. I'll rate it out of 10.",
+  "Let me post anything I want to your Instagram story for 1 minute.",
+  "Say 'I love you' in the cheesiest, most dramatic voice possible.",
+  "Give me a 60-second shoulder massage.",
+  "Say three things you genuinely admire about me without breaking eye contact.",
+  "Let me style your hair however I want for the next 10 minutes.",
+  "Do 10 pushups — or give me a foot massage if you can't!",
+  "Show me the last photo you took on your phone.",
+  "Call a friend and tell them you're learning to yodel.",
+  "Do your best catwalk across the room.",
+  "Let me draw a tiny doodle on your arm with a pen.",
+  "Speak in an accent of my choice for the next 3 minutes.",
+  "Re-create the last selfie you posted but make it 10x more dramatic.",
+  "Do your best robot dance for 30 seconds.",
+  "Let me pick your next Instagram caption.",
+  "Tell me a joke — it must make me laugh or you do 5 jumping jacks.",
+  "Feed me a snack with your eyes closed.",
+  "Do a dramatic slow-motion run across the room.",
+  "Let me read your last 5 sent messages aloud.",
+  "Speak only in questions for the next 2 minutes.",
+  "Recreate our first date in 30 seconds.",
+];
+
+const funMessages = [
+  "Ooh this one's good 👀", "No backing out now!", "The truth comes out...",
+  "Brave choice! 💪", "This should be fun 😏", "Don't be shy!",
+  "The dare gods have spoken.", "Time to be honest!", "You asked for it 😄",
+  "Plot twist incoming...",
+];
+
+let currentPlayer = 1;
+let scores = [0, 0];
+let round = 0;
+let lastType = null;
+let usedTruths = [], usedDares = [];
+
+function getRandom(arr, used) {
+  let avail = arr.map((_, i) => i).filter(i => !used.includes(i));
+  if (!avail.length) { used.length = 0; avail = arr.map((_, i) => i); }
+  const pick = avail[Math.floor(Math.random() * avail.length)];
+  used.push(pick);
+  return arr[pick];
+}
+
+function selectPlayer(p) {
+  currentPlayer = p;
+  document.querySelectorAll('.player-card').forEach((el, i) => {
+    el.classList.toggle('active', i + 1 === p);
+  });
+}
+
+function draw(type) {
+  lastType = type;
+  round++;
+  scores[currentPlayer - 1]++;
+  updateScores();
+
+  const text = type === 'truth' ? getRandom(truths, usedTruths) : getRandom(dares, usedDares);
+  const name = currentPlayer === 1
+    ? document.getElementById('p1name').textContent
+    : document.getElementById('p2name').textContent;
+
+  const stage = document.getElementById('cardStage');
+  const idle = document.getElementById('idleState');
+  const content = document.getElementById('cardContent');
+  const badge = document.getElementById('cardBadge');
+  const question = document.getElementById('cardQuestion');
+  const forEl = document.getElementById('cardFor');
+  const roundEl = document.getElementById('roundNum');
+
+  idle.style.display = 'none';
+  content.style.display = 'block';
+
+  badge.className = 'card-type-badge ' + (type === 'truth' ? 'badge-truth' : 'badge-dare');
+  badge.textContent = type === 'truth' ? '✦ Truth' : '⚡ Dare';
+  question.textContent = text;
+  forEl.textContent = 'For ' + name;
+  roundEl.textContent = 'Round ' + round;
+
+  stage.className = 'card-stage ' + (type === 'truth' ? 'truth-mode' : 'dare-mode');
+
+  content.classList.remove('slide-in');
+  void content.offsetWidth;
+  content.classList.add('slide-in');
+
+  const msgs = funMessages;
+  document.getElementById('funMsg').textContent = msgs[Math.floor(Math.random() * msgs.length)];
+}
+
+function skipCard() {
+  if (lastType) {
+    scores[currentPlayer - 1] = Math.max(0, scores[currentPlayer - 1] - 1);
+    draw(lastType);
+    scores[currentPlayer - 1]--;
+    updateScores();
+  }
+}
+
+function switchTurn() {
+  selectPlayer(currentPlayer === 1 ? 2 : 1);
+  const name = currentPlayer === 1
+    ? document.getElementById('p1name').textContent
+    : document.getElementById('p2name').textContent;
+  document.getElementById('funMsg').textContent = name + "'s turn! 🎯";
+}
+
+function updateScores() {
+  document.getElementById('p1score').textContent = scores[0] + (scores[0] === 1 ? ' round' : ' rounds');
+  document.getElementById('p2score').textContent = scores[1] + (scores[1] === 1 ? ' round' : ' rounds');
+}
+</script>
+</body>
+</html>
